@@ -1,40 +1,45 @@
 (defun count-spaces (&optional move-bolp)
-  "Count empty whitespaces between start of line and first non
-whitespace character."
-  (interactive)
+  "Count whitespaces between the point and first non-whitespace
+character.
+
+If MOVE-BOLP is non-nil, move point to beginning of line before
+counting spaces.
+"
   (let ((count 0)
         (mark-bolp))
     (save-excursion
-      (and move-bolp (move-beginning-of-line nil))
+      (and move-bolp (beginning-of-line))
       (setq mark-bolp (point))
       (skip-chars-forward " \t")
       (or (eolp) (setq count (- (point) mark-bolp))))
     count))
 
-(defun indent-non-rigidly (start end &optional amount)
-  "Indent all lines in region relatively."
+(defun indent-non-rigidly (beg end &optional new-width)
+  "Increase or decrease indentation width relative to the current
+indentation levels in the region.
+
+NEW-WIDTH specifies the amount of spaces for a single indentation
+level. If unspecfied, it will be set to the current width + 1.
+"
   (interactive "r\nP")
-  (if (region-active-p)
+  (if (use-region-p)
       (let ((preindent 0)
-            (width 0)
-            (level 0)
-            (ctr 0)
-            (lines (count-lines start end)))
+            (curr-width 0)
+            (level 0))
         (save-excursion
-          (goto-char start)
+          (goto-char beg)
           (setq preindent (count-spaces t))
-          (while (and (= 0 width) (< (point) end))
+          (while (and (= 0 curr-width) (< (point) end))
             (forward-line)
             (forward-char preindent)
-            (setq width (count-spaces)))
-          (or amount (setq amount (+ 1 width)))
-          (goto-char start)
-          (while (< ctr lines)
+            (setq curr-width (count-spaces)))
+          (or new-width (setq new-width (+ 1 curr-width)))
+          (goto-char beg)
+          (dotimes (ctr (count-lines beg end))
             (forward-line)
             (forward-char preindent)
-            (setq level (/ (count-spaces) width))
-            (delete-char (* level width))
-            (insert-char ?\ (* level amount))
-            (move-end-of-line nil)
-            (setq ctr (1+ ctr)))))
-    (message "Please select an active region.")))
+            (setq level (/ (count-spaces) curr-width))
+            (delete-char (* level curr-width))
+            (insert-char ?\ (* level new-width))
+            (move-end-of-line nil))))
+    (message "Please mark an active region.")))
