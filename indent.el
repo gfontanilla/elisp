@@ -16,10 +16,11 @@ counting spaces.
 
 (defun indent-non-rigidly (beg end &optional new-width)
   "Increase or decrease indentation width relative to the current
-indentation levels in the region.
+indentation levels in the region. Tabs inside the region are
+converted into spaces.
 
 NEW-WIDTH specifies the amount of spaces for a single indentation
-level. If unspecfied, it will be set to the current width + 1.
+level. If unspecified, it will be set to the current width + 1.
 "
   (interactive "r\nP")
   (if (use-region-p)
@@ -27,6 +28,9 @@ level. If unspecfied, it will be set to the current width + 1.
             (curr-width 0)
             (level 0))
         (save-excursion
+          (untabify beg end)
+          (setq beg (region-beginning)
+                end (region-end))
           (goto-char beg)
           (setq preindent (count-spaces t))
           (while (and (= 0 curr-width) (< (point) end))
